@@ -48,6 +48,7 @@ public class OrderActivity extends AppCompatActivity {
     String orderID;
     String menuID;
     String stdID;
+    String menuName;
 
     Socket mSocket;
 
@@ -123,19 +124,40 @@ public class OrderActivity extends AppCompatActivity {
             // 주문 목록 초기화 예시
             List<OrderItem> orderItems;
 
-            orderItems = new ArrayList<>();
-            orderItems.add(new OrderItem("로제떡볶이", 1));
-            orderList.add(new Order("주문1", OrderCategory.READY, orderItems));
+            try {
+                mSocket = IO.socket("http://10.0.2.2:5000");
+            } catch (URISyntaxException e) {
+                e.printStackTrace();
+            }
+
+            mSocket.on("order_updated", new Emitter.Listener() {
+                @Override
+                public void call(Object... args) {
+                    JSONObject data = (JSONObject) args[0];
+                    try {
+                        orderID = data.getString("orderID");
+                        menuID = data.getString("MenuID");
+                        stdID = data.getString("StdID");
+                        getmenuName(menuID);
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
 
             orderItems = new ArrayList<>();
-            orderItems.add(new OrderItem("로제떡볶이",2));
-            orderItems.add(new OrderItem("순대",1));
-            orderList.add(new Order("주문2", OrderCategory.READY, orderItems));
+            orderItems.add(new OrderItem(menuName, 1));
+            orderList.add(new Order(orderID, OrderCategory.READY, orderItems));
 
-            orderItems = new ArrayList<>();
-            orderItems.add(new OrderItem("옛날떡볶이",1));
-            orderItems.add(new OrderItem("튀김",1));
-            orderList.add(new Order("주문3", OrderCategory.READY, orderItems));
+            // orderItems = new ArrayList<>();
+            // orderItems.add(new OrderItem("로제떡볶이",2));
+            // orderItems.add(new OrderItem("순대",1));
+            // orderList.add(new Order("주문2", OrderCategory.READY, orderItems));
+
+            // orderItems = new ArrayList<>();
+            // orderItems.add(new OrderItem("옛날떡볶이",1));
+            // orderItems.add(new OrderItem("튀김",1));
+            // orderList.add(new Order("주문3", OrderCategory.READY, orderItems));
         }
 
         public List<Order> getOrderList(OrderCategory category) {
@@ -180,27 +202,6 @@ public class OrderActivity extends AppCompatActivity {
                 RestName.setText("한우사골마라탕");
                 break;
         }
-
-
-        try {
-            mSocket = IO.socket("http://10.0.2.2:5000");
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
-        }
-
-        mSocket.on("order_updated", new Emitter.Listener() {
-            @Override
-            public void call(Object... args) {
-                JSONObject data = (JSONObject) args[0];
-                try {
-                    orderID = data.getString("orderID");
-                    menuID = data.getString("MenuID");
-                    stdID = data.getString("StdID");
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-            }
-        });
 
 
 
@@ -293,5 +294,44 @@ public class OrderActivity extends AppCompatActivity {
         public CharSequence getPageTitle(int position) {
             return fragmentTitles.get(position);
         }
+    }
+
+    OkHttpClient client = new OkHttpClient();
+    public void getmenuName(String menuID) {
+        RequestBody formBody = new FormBody.Builder()
+                .add("menuID", menuID)
+                .build();
+        Request request = new Request.Builder()
+                .url("http://10.0.2.2:5000/getMenuName")
+                .post(formBody)
+                .build();
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                e.printStackTrace();
+            }
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                if (response.isSuccessful()) {
+                    String responseBody = response.body().string();
+                    try {
+                        JSONObject jsonObject = new JSONObject(responseBody);
+                        if (jsonObject.has("Menu")) {
+                            String menu = jsonObject.getString("Menu");
+                            runOnUiThread(() -> {
+                                menuName = menu;
+                            });
+                        } else if (jsonObject.has("error")) {
+                            String error = jsonObject.getString("error");
+                            runOnUiThread(() -> {
+                                System.out.println("error");
+                            });
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        });
     }
 }
