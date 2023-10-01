@@ -74,7 +74,7 @@ public class OrderActivity extends AppCompatActivity {
             return orderItems;
         }
 
-        public void addOrderItem(String menu, int quantity) {
+        public void addOrderItem(String menu, String quantity) {
             orderItems.add(new OrderItem(menu, quantity));
         }
 
@@ -95,9 +95,9 @@ public class OrderActivity extends AppCompatActivity {
 
     public class OrderItem {
         private String menu;       // 주문된 메뉴
-        private int quantity;    // 주문 수량
+        private String quantity;    // 주문 수량
 
-        public OrderItem(String menu, int quantity) {
+        public OrderItem(String menu, String quantity) {
             this.menu = menu;
             this.quantity = quantity;
         }
@@ -106,7 +106,7 @@ public class OrderActivity extends AppCompatActivity {
             return menu;
         }
 
-        public int getQuantity() {
+        public String getQuantity() {
             return quantity;
         }
     }
@@ -120,39 +120,19 @@ public class OrderActivity extends AppCompatActivity {
     public class OrderManager {
         private List<Order> orderList = new ArrayList<>();
 
+        // OrderManager(String menuName, String orderID, String quantity) {
         OrderManager() {
             // 주문 목록 초기화 예시
             List<OrderItem> orderItems;
 
-            try {
-                mSocket = IO.socket("http://10.0.2.2:5000");
-            } catch (URISyntaxException e) {
-                e.printStackTrace();
-            }
-
-            mSocket.on("order_updated", new Emitter.Listener() {
-                @Override
-                public void call(Object... args) {
-                    JSONObject data = (JSONObject) args[0];
-                    try {
-                        orderID = data.getString("orderID");
-                        menuID = data.getString("MenuID");
-                        stdID = data.getString("StdID");
-                        getmenuName(menuID);
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                    }
-                }
-            });
+            // orderItems = new ArrayList<>();
+            // orderItems.add(new OrderItem(menuName, quantity));
+            // orderList.add(new Order(orderID, OrderCategory.READY, orderItems));
 
             orderItems = new ArrayList<>();
-            orderItems.add(new OrderItem(menuName, 1));
-            orderList.add(new Order(orderID, OrderCategory.READY, orderItems));
-
-            // orderItems = new ArrayList<>();
-            // orderItems.add(new OrderItem("로제떡볶이",2));
-            // orderItems.add(new OrderItem("순대",1));
-            // orderList.add(new Order("주문2", OrderCategory.READY, orderItems));
+            orderItems.add(new OrderItem("로제떡볶이","2"));
+            orderItems.add(new OrderItem("순대","1"));
+            orderList.add(new Order("주문2", OrderCategory.READY, orderItems));
 
             // orderItems = new ArrayList<>();
             // orderItems.add(new OrderItem("옛날떡볶이",1));
@@ -176,8 +156,6 @@ public class OrderActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_order);
-
-        this.orderManager = new OrderManager();
 
         Intent getintent = getIntent();
         Bundle bundle = getintent.getExtras();
@@ -204,7 +182,30 @@ public class OrderActivity extends AppCompatActivity {
         }
 
 
+        try {
+            mSocket = IO.socket("http://10.0.2.2:5000");
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+        }
 
+        mSocket.on("order_updated", new Emitter.Listener() {
+            @Override
+            public void call(Object... args) {
+                JSONObject data = (JSONObject) args[0];
+                System.out.println(data);
+                try {
+                    orderID = data.getString("orderID");
+                    menuID = data.getString("MenuID");
+                    stdID = data.getString("StdID");
+                    getmenuName(menuID);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
+        //this.orderManager = new OrderManager(menuName, orderID, "1");
+        this.orderManager = new OrderManager();
 
         tabLayout = findViewById(R.id.tabLayout);
         viewPager = findViewById(R.id.viewPager);

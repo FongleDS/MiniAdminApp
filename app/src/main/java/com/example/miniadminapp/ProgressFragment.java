@@ -16,9 +16,21 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.FormBody;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 
 public class ProgressFragment extends Fragment {
     private final OrderActivity.OrderManager orderManager;
@@ -135,11 +147,12 @@ public class ProgressFragment extends Fragment {
                         }
                     });
                 }
-                // callbtn 버튼 클릭 이벤트 처리
+                // 호출 버튼 클릭 이벤트 처리
                 if (callbtn != null) {
                     callbtn.setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View v) {
+                            updatestat(orderID, 1);
                             int position = getAdapterPosition();
                             if (position != RecyclerView.NO_POSITION) {
                                 OrderActivity.Order order = orderList.get(position);
@@ -160,7 +173,7 @@ public class ProgressFragment extends Fragment {
                 for (OrderActivity.OrderItem item : order.getOrderItems()) {
 
                     stringBuilder.append(
-                            String.format("%s %d \n",
+                            String.format("%s %s \n",
                                     item.getMenu(), item.getQuantity())); // 각 항목을 줄 바꿈과 함께 추가
 
                     //Log.d("Order Item : ", item.getMenu());
@@ -170,6 +183,43 @@ public class ProgressFragment extends Fragment {
         }
     }
 
+
+    OkHttpClient client = new OkHttpClient();
+    public void updatestat(String orderID, String stat) {
+        RequestBody formBody = new FormBody.Builder()
+                .add("orderID", orderID)
+                .add("stat", stat)
+                .build();
+        Request request = new Request.Builder()
+                .url("http://10.0.2.2:5000/updateOrderStat")
+                .post(formBody)
+                .build();
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                e.printStackTrace();
+            }
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                if (response.isSuccessful()) {
+                    String responseBody = response.body().string();
+                    try {
+                        JSONObject jsonObject = new JSONObject(responseBody);
+                        if (jsonObject.has("Result")) {
+                            String result = jsonObject.getString("Result");
+                            System.out.println("===========");
+                            System.out.println(result);
+                        } else if (jsonObject.has("error")) {
+                            String error = jsonObject.getString("error");
+                            System.out.println("error");
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        });
+    }
 
 
 }
