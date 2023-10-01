@@ -56,7 +56,6 @@ public class LoginActivity extends AppCompatActivity {
     }
 
 
-
     // 서버 연결 입니다!
     OkHttpClient client = new OkHttpClient();
     public void fetchPassword(String RestID) {

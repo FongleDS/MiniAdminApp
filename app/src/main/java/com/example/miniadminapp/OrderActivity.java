@@ -183,8 +183,25 @@ public class OrderActivity extends AppCompatActivity {
                 break;
         }
 
+
+        this.orderManager = new OrderManager();
+
+        orderManager.addOrder("4", "떡볶이", "1");
+
+
+        tabLayout = findViewById(R.id.tabLayout);
+        viewPager = findViewById(R.id.viewPager);
+        pagerAdapter = new OrdersPagerAdapter(getSupportFragmentManager());
+
+        // 프래그먼트 추가: "주문접수", "처리중", "완료" 등
+        // pagerAdapter.addFragment(new ProgressFragment(OrderCategory.READY, orderManager, notiHandle), "주문접수");
+        pagerAdapter.addFragment(new ProgressFragment(OrderCategory.PROCESS, orderManager, notiHandle), "처리중");
+        pagerAdapter.addFragment(new ProgressFragment(OrderCategory.COMPLETE, orderManager, notiHandle), "완료");
+
+
         try {
             mSocket = IO.socket("http://10.0.2.2:5000");
+            mSocket.connect();
         } catch (URISyntaxException e) {
             e.printStackTrace();
         }
@@ -200,13 +217,17 @@ public class OrderActivity extends AppCompatActivity {
                     String stdID = data.getString("StdID");
                     String restID = data.getString("RestID");
                     String menuName = getmenuName(menuID);
+                    System.out.println(menuName);
                     if (RestID.equals(restID)) {
-                        orderManager.addOrder(orderID, menuName, "1");
-
-                        // List<OrderItem> OrderItems = new ArrayList<>();
-
-                        // OrderItems.add(new OrderItem(menuName, "1"));
-                        // orderList.add(new Order(orderID, OrderCategory.READY, OrderItems));
+                        // orderManager.addOrder(orderID, menuName, "1");
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                orderManager.addOrder(orderID, menuName, "1"); // 데이터셋에 추가
+                                pagerAdapter.notifyDataSetChanged();
+                                viewPager.setAdapter(pagerAdapter);
+                            }
+                        });
                     }
                 } catch (JSONException e) {
                     e.printStackTrace();
@@ -214,19 +235,6 @@ public class OrderActivity extends AppCompatActivity {
             }
         });
 
-        this.orderManager = new OrderManager();
-
-        orderManager.addOrder("4", "떡볶이", "1");
-
-
-        tabLayout = findViewById(R.id.tabLayout);
-        viewPager = findViewById(R.id.viewPager);
-        pagerAdapter = new OrdersPagerAdapter(getSupportFragmentManager());
-
-        // 프래그먼트 추가: "주문접수", "처리중", "완료" 등
-        // pagerAdapter.addFragment(new ProgressFragment(OrderCategory.READY, orderManager, notiHandle), "주문접수");
-        pagerAdapter.addFragment(new ProgressFragment(OrderCategory.PROCESS, orderManager, notiHandle), "처리중");
-        pagerAdapter.addFragment(new ProgressFragment(OrderCategory.COMPLETE, orderManager, notiHandle), "완료");
 
         viewPager.setAdapter(pagerAdapter);
         viewPager.setCurrentItem(0);
@@ -306,6 +314,10 @@ public class OrderActivity extends AppCompatActivity {
         }
     }
 
+    public interface MenuNameCallback {
+        void onMenuNameReceived(String menuName);
+    }
+
     OkHttpClient client = new OkHttpClient();
     public String getmenuName(String menuID) {
         final String[] menuName = new String[1];
@@ -313,9 +325,27 @@ public class OrderActivity extends AppCompatActivity {
                 .add("menuID", menuID)
                 .build();
         Request request = new Request.Builder()
-                .url("http://10.0.2.2:5000/getMenuName")
+                .url("http://10.0.2.2:5000/getmenuName")
                 .post(formBody)
                 .build();
+
+        try {
+            Response response = client.newCall(request).execute();
+            if (response.isSuccessful()) {
+                String responseBody = response.body().string();
+                JSONObject jsonObject = new JSONObject(responseBody);
+                if (jsonObject.has("Menu")) {
+                    String menu = jsonObject.getString("Menu");
+                    System.out.println(menu);
+                    return menu;
+                }
+            }
+        } catch (IOException | JSONException e) {
+            e.printStackTrace();
+        }
+
+        return null; // 오류나 메뉴 이름을 찾지 못한 경우 null 반환
+        /*
         client.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
@@ -329,7 +359,7 @@ public class OrderActivity extends AppCompatActivity {
                         JSONObject jsonObject = new JSONObject(responseBody);
                         if (jsonObject.has("Menu")) {
                             String menu = jsonObject.getString("Menu");
-                            menuName[0] = menu;
+                            return jsonObject.getString("Menu");
                         } else if (jsonObject.has("error")) {
                             String error = jsonObject.getString("error");
                             runOnUiThread(() -> {
@@ -342,6 +372,11 @@ public class OrderActivity extends AppCompatActivity {
                 }
             }
         });
+        System.out.println(menuName[0]);
+        System.out.println("========");
         return menuName[0];
+    }
+
+         */
     }
 }
