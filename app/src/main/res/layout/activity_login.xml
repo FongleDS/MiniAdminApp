@@ -29,7 +29,7 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="20dp"
             android:gravity="center_horizontal"
-            android:text="회원 로그인"
+            android:text="학식당 관리자 로그인"
             android:textAlignment="center"
             android:textSize="25dp"
             android:textStyle="bold" />
@@ -46,7 +46,7 @@
             android:text="" />
 
         <EditText
-            android:id="@+id/ediPassword"
+            android:id="@+id/editPassword"
             android:layout_width="wrap_content"
             android:layout_height="40dp"
             android:layout_gravity="center"

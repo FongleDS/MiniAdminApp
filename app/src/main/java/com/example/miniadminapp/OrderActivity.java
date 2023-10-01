@@ -1,8 +1,10 @@
 package com.example.miniadminapp;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -12,10 +14,28 @@ import androidx.fragment.app.FragmentPagerAdapter;
 import androidx.viewpager.widget.ViewPager;
 import com.google.android.material.tabs.TabLayout;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+
+import io.socket.client.IO;
+import io.socket.client.Socket;
+import io.socket.emitter.Emitter;
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.FormBody;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 
 public class OrderActivity extends AppCompatActivity {
 
@@ -23,6 +43,14 @@ public class OrderActivity extends AppCompatActivity {
     private ViewPager viewPager;
     private OrdersPagerAdapter pagerAdapter;
     private OrderManager orderManager;
+    private TextView RestName;
+    ArrayList infoList = new ArrayList();
+    String orderID;
+    String menuID;
+    String stdID;
+
+    Socket mSocket;
+
 
     public class Order implements Comparable<Order>{
         private String orderName;          // 주문명
@@ -98,15 +126,16 @@ public class OrderActivity extends AppCompatActivity {
             orderItems = new ArrayList<>();
             orderItems.add(new OrderItem("로제떡볶이", 1));
             orderList.add(new Order("주문1", OrderCategory.READY, orderItems));
+
             orderItems = new ArrayList<>();
             orderItems.add(new OrderItem("로제떡볶이",2));
             orderItems.add(new OrderItem("순대",1));
             orderList.add(new Order("주문2", OrderCategory.READY, orderItems));
+
             orderItems = new ArrayList<>();
             orderItems.add(new OrderItem("옛날떡볶이",1));
             orderItems.add(new OrderItem("튀김",1));
             orderList.add(new Order("주문3", OrderCategory.READY, orderItems));
-
         }
 
         public List<Order> getOrderList(OrderCategory category) {
@@ -127,6 +156,54 @@ public class OrderActivity extends AppCompatActivity {
         setContentView(R.layout.activity_order);
 
         this.orderManager = new OrderManager();
+
+        Intent getintent = getIntent();
+        Bundle bundle = getintent.getExtras();
+        String RestID = bundle.getString("RestID");
+        System.out.println(RestID);
+        RestName = findViewById(R.id.RestName);
+
+        switch (RestID) {
+            case "1" :
+                RestName.setText("파스타");
+                break;
+            case "2" :
+                RestName.setText("군산카츠");
+                break;
+            case "3" :
+                RestName.setText("마성떡볶이");
+                break;
+            case "4" :
+                RestName.setText("토스트");
+                break;
+            case "5" :
+                RestName.setText("한우사골마라탕");
+                break;
+        }
+
+
+        try {
+            mSocket = IO.socket("http://10.0.2.2:5000");
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+        }
+
+        mSocket.on("order_updated", new Emitter.Listener() {
+            @Override
+            public void call(Object... args) {
+                JSONObject data = (JSONObject) args[0];
+                try {
+                    orderID = data.getString("orderID");
+                    menuID = data.getString("MenuID");
+                    stdID = data.getString("StdID");
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
+
+
 
         tabLayout = findViewById(R.id.tabLayout);
         viewPager = findViewById(R.id.viewPager);
@@ -159,7 +236,11 @@ public class OrderActivity extends AppCompatActivity {
         });
 
         tabLayout.setupWithViewPager(viewPager);
+
+
+
     }
+
 
     public void toProcess() {
 
