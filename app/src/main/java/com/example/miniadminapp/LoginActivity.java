@@ -64,8 +64,8 @@ public class LoginActivity extends AppCompatActivity {
                 .add("RestID", RestID)
                 .build();
         Request request = new Request.Builder()
-                // .url("http://192.168.0.142:5000/get_password")
-                .url("http://10.0.2.2:5000/getRestPassword")
+                .url("http://192.168.0.142:5000/get_password")
+                // .url("http://10.0.2.2:5000/getRestPassword")
                 .post(formBody)
                 .build();
         client.newCall(request).enqueue(new Callback() {

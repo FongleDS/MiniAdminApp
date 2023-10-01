@@ -55,9 +55,9 @@ public class ProgressFragment extends Fragment {
 
         // 어댑터 초기화
         switch (category) {
-            case READY:
-                adapter = new OrderAdapter(orderManager, OrderActivity.OrderCategory.READY, R.layout.list_item, handler);
-                break;
+            // case READY:
+                // adapter = new OrderAdapter(orderManager, OrderActivity.OrderCategory.READY, R.layout.list_item, handler);
+                // break;
             case PROCESS:
                 adapter = new OrderAdapter(orderManager, OrderActivity.OrderCategory.PROCESS, R.layout.list_item2, handler);
                 break;
@@ -130,10 +130,10 @@ public class ProgressFragment extends Fragment {
                 super(itemView);
                 orderNameTextView = itemView.findViewById(R.id.orderNameTextView);
                 menuTextView = itemView.findViewById(R.id.menuTextView);
-                checkbtn = itemView.findViewById(R.id.checkbtn);
+                // checkbtn = itemView.findViewById(R.id.checkbtn);
                 callbtn = itemView.findViewById(R.id.callbtn);
 
-                // checkbtn 버튼 클릭 이벤트 처리
+/*
                 if (checkbtn != null) {
                     checkbtn.setOnClickListener(new View.OnClickListener() {
                         @Override
@@ -147,16 +147,19 @@ public class ProgressFragment extends Fragment {
                         }
                     });
                 }
+ */
+
                 // 호출 버튼 클릭 이벤트 처리
                 if (callbtn != null) {
                     callbtn.setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View v) {
-                            updatestat(orderID, 1);
                             int position = getAdapterPosition();
                             if (position != RecyclerView.NO_POSITION) {
                                 OrderActivity.Order order = orderList.get(position);
                                 order.setCategory(OrderActivity.OrderCategory.COMPLETE);
+
+                                updatestat(order.getOrderName(), "1");
                                 adapter.notifyDataSetChanged();
                             }
                         }

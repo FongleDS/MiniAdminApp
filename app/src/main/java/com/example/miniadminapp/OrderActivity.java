@@ -44,11 +44,9 @@ public class OrderActivity extends AppCompatActivity {
     private OrdersPagerAdapter pagerAdapter;
     private OrderManager orderManager;
     private TextView RestName;
-    ArrayList infoList = new ArrayList();
-    String orderID;
-    String menuID;
-    String stdID;
-    String menuName;
+    // private List<Order> orderList = new ArrayList<>();
+
+    // String menuName, OrderestID, orderID, menuID, stdID;
 
     Socket mSocket;
 
@@ -112,7 +110,6 @@ public class OrderActivity extends AppCompatActivity {
     }
 
     public enum OrderCategory {
-        READY,
         PROCESS,
         COMPLETE
     }
@@ -120,7 +117,6 @@ public class OrderActivity extends AppCompatActivity {
     public class OrderManager {
         private List<Order> orderList = new ArrayList<>();
 
-        // OrderManager(String menuName, String orderID, String quantity) {
         OrderManager() {
             // 주문 목록 초기화 예시
             List<OrderItem> orderItems;
@@ -132,7 +128,7 @@ public class OrderActivity extends AppCompatActivity {
             orderItems = new ArrayList<>();
             orderItems.add(new OrderItem("로제떡볶이","2"));
             orderItems.add(new OrderItem("순대","1"));
-            orderList.add(new Order("주문2", OrderCategory.READY, orderItems));
+            orderList.add(new Order("주문 2", OrderCategory.PROCESS, orderItems));
 
             // orderItems = new ArrayList<>();
             // orderItems.add(new OrderItem("옛날떡볶이",1));
@@ -150,6 +146,12 @@ public class OrderActivity extends AppCompatActivity {
             return resultList;
         }
 
+        public void addOrder(String orderID, String menuName, String quantity) {
+            String orderIDs = "주문 " + orderID;
+            List<OrderItem> orderItems = new ArrayList<>();
+            orderItems.add(new OrderItem(menuName, quantity));
+            orderList.add(new Order(orderIDs, OrderCategory.PROCESS, orderItems));
+        }
     }
 
     @Override
@@ -181,7 +183,6 @@ public class OrderActivity extends AppCompatActivity {
                 break;
         }
 
-
         try {
             mSocket = IO.socket("http://10.0.2.2:5000");
         } catch (URISyntaxException e) {
@@ -194,25 +195,36 @@ public class OrderActivity extends AppCompatActivity {
                 JSONObject data = (JSONObject) args[0];
                 System.out.println(data);
                 try {
-                    orderID = data.getString("orderID");
-                    menuID = data.getString("MenuID");
-                    stdID = data.getString("StdID");
-                    getmenuName(menuID);
+                    String orderID = data.getString("orderID");
+                    String menuID = data.getString("MenuID");
+                    String stdID = data.getString("StdID");
+                    String restID = data.getString("RestID");
+                    String menuName = getmenuName(menuID);
+                    if (RestID.equals(restID)) {
+                        orderManager.addOrder(orderID, menuName, "1");
+
+                        // List<OrderItem> OrderItems = new ArrayList<>();
+
+                        // OrderItems.add(new OrderItem(menuName, "1"));
+                        // orderList.add(new Order(orderID, OrderCategory.READY, OrderItems));
+                    }
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
             }
         });
 
-        //this.orderManager = new OrderManager(menuName, orderID, "1");
         this.orderManager = new OrderManager();
+
+        orderManager.addOrder("4", "떡볶이", "1");
+
 
         tabLayout = findViewById(R.id.tabLayout);
         viewPager = findViewById(R.id.viewPager);
         pagerAdapter = new OrdersPagerAdapter(getSupportFragmentManager());
 
         // 프래그먼트 추가: "주문접수", "처리중", "완료" 등
-        pagerAdapter.addFragment(new ProgressFragment(OrderCategory.READY, orderManager, notiHandle), "주문접수");
+        // pagerAdapter.addFragment(new ProgressFragment(OrderCategory.READY, orderManager, notiHandle), "주문접수");
         pagerAdapter.addFragment(new ProgressFragment(OrderCategory.PROCESS, orderManager, notiHandle), "처리중");
         pagerAdapter.addFragment(new ProgressFragment(OrderCategory.COMPLETE, orderManager, notiHandle), "완료");
 
@@ -238,9 +250,6 @@ public class OrderActivity extends AppCompatActivity {
         });
 
         tabLayout.setupWithViewPager(viewPager);
-
-
-
     }
 
 
@@ -298,7 +307,8 @@ public class OrderActivity extends AppCompatActivity {
     }
 
     OkHttpClient client = new OkHttpClient();
-    public void getmenuName(String menuID) {
+    public String getmenuName(String menuID) {
+        final String[] menuName = new String[1];
         RequestBody formBody = new FormBody.Builder()
                 .add("menuID", menuID)
                 .build();
@@ -319,9 +329,7 @@ public class OrderActivity extends AppCompatActivity {
                         JSONObject jsonObject = new JSONObject(responseBody);
                         if (jsonObject.has("Menu")) {
                             String menu = jsonObject.getString("Menu");
-                            runOnUiThread(() -> {
-                                menuName = menu;
-                            });
+                            menuName[0] = menu;
                         } else if (jsonObject.has("error")) {
                             String error = jsonObject.getString("error");
                             runOnUiThread(() -> {
@@ -334,5 +342,6 @@ public class OrderActivity extends AppCompatActivity {
                 }
             }
         });
+        return menuName[0];
     }
 }
