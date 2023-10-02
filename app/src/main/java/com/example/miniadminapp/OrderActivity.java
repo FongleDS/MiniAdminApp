@@ -119,16 +119,11 @@ public class OrderActivity extends AppCompatActivity {
 
         OrderManager() {
             // 주문 목록 초기화 예시
-            List<OrderItem> orderItems;
+            // List<OrderItem> orderItems;
 
             // orderItems = new ArrayList<>();
             // orderItems.add(new OrderItem(menuName, quantity));
             // orderList.add(new Order(orderID, OrderCategory.READY, orderItems));
-
-            orderItems = new ArrayList<>();
-            orderItems.add(new OrderItem("로제떡볶이","2"));
-            orderItems.add(new OrderItem("순대","1"));
-            orderList.add(new Order("주문 2", OrderCategory.PROCESS, orderItems));
 
             // orderItems = new ArrayList<>();
             // orderItems.add(new OrderItem("옛날떡볶이",1));
@@ -186,7 +181,7 @@ public class OrderActivity extends AppCompatActivity {
 
         this.orderManager = new OrderManager();
 
-        orderManager.addOrder("4", "떡볶이", "1");
+        //orderManager.addOrder("4", "떡볶이", "1");
 
 
         tabLayout = findViewById(R.id.tabLayout);
@@ -260,11 +255,6 @@ public class OrderActivity extends AppCompatActivity {
         tabLayout.setupWithViewPager(viewPager);
     }
 
-
-    public void toProcess() {
-
-    }
-
     private Handler notiHandle = new Handler(new Handler.Callback() {
         @Override
         public boolean handleMessage(@NonNull Message message) {
@@ -314,9 +304,6 @@ public class OrderActivity extends AppCompatActivity {
         }
     }
 
-    public interface MenuNameCallback {
-        void onMenuNameReceived(String menuName);
-    }
 
     OkHttpClient client = new OkHttpClient();
     public String getmenuName(String menuID) {
@@ -345,38 +332,5 @@ public class OrderActivity extends AppCompatActivity {
         }
 
         return null; // 오류나 메뉴 이름을 찾지 못한 경우 null 반환
-        /*
-        client.newCall(request).enqueue(new Callback() {
-            @Override
-            public void onFailure(Call call, IOException e) {
-                e.printStackTrace();
-            }
-            @Override
-            public void onResponse(Call call, Response response) throws IOException {
-                if (response.isSuccessful()) {
-                    String responseBody = response.body().string();
-                    try {
-                        JSONObject jsonObject = new JSONObject(responseBody);
-                        if (jsonObject.has("Menu")) {
-                            String menu = jsonObject.getString("Menu");
-                            return jsonObject.getString("Menu");
-                        } else if (jsonObject.has("error")) {
-                            String error = jsonObject.getString("error");
-                            runOnUiThread(() -> {
-                                System.out.println("error");
-                            });
-                        }
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-        });
-        System.out.println(menuName[0]);
-        System.out.println("========");
-        return menuName[0];
-    }
-
-         */
     }
 }
